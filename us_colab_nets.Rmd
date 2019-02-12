@@ -1,0 +1,86 @@
+---
+title: "Collaboration networks in the US Senate"
+output: html_notebook
+---
+
+This project recreates the first study in "Automated Data Collection in R" pg 343-358. The edition used was published in 2015. Since publication, 'thomas.loc.gov' redirects to 'Congress.gov'. The site has since incorporated dynamic page rendering thus a different strategy for data collection had to be developed.
+
+
+## 2.1 Scraping Colaborators from Site
+```{r setup, include=FALSE}
+#This scrip opens webdriver and opens all the pages of senate bills
+# then captures the sponsor and cosponsor into list/df
+# if a bill does not have a cosponsor, then the function must catch the error and return an na
+
+library(RSelenium)
+library(stringr)
+
+rD <- rsDriver(browser = 'chrome')
+remDr <- rD[['client']]
+```
+
+```{r scraper, eval=FALSE}
+fetch_collaborators <- function(bill_number, WebDriver) {
+  
+  bill <- list()
+
+  #Get url
+  #go to page
+  WebDriver$navigate(str_c('https://www.congress.gov/bill/115th-congress/senate-bill/', bill_number, '/cosponsors'))
+  
+    #save url
+    bill$url <- WebDriver$getCurrentUrl()
+  #Get sponsor
+  webElement <- WebDriver$findElement(using = "css", "#display-message a")
+  bill$sponsor <- webElement$getElementText()
+  
+  #Get cosponsors unknown number of cosponsors
+  webElement <- try(WebDriver$findElements(using = "css", ".actions a"), )
+  
+  #iterate through object
+  if(length(webElement) > 0){
+    for (i in 1:length(webElement)){ 
+      bill$cosponsor[i] <- webElement[[i]]$getElementText()
+    }
+  }
+  
+  Sys.sleep(2)
+  return(bill)
+}
+```{r execute, eval=FALSE}
+bills <- lapply(1:3805, fetch_collaborators, remDr)
+
+#Save file to local machine
+saveRDS(bills, file = "Sen_Bills")
+```
+remDr$close()
+rD[['server']]$stop()
+
+length(bills)
+```
+
+Since the publication of the Case Study, the thomas.loc.gov website is now redirected to 'https://www.congress.gov/'. The process will still be followed. Legislation Types will be 'All Senate'. Then we click search.
+
+The search results are displayed in decending order with the last bill, S.3805. If we select the first result the link sends us to 'https://www.congress.gov/bill/115th-congress/senate-bill/3805?s=4&r=1'. By experimenting with the url we noticed that we can remove the text '?s=4&r=1'. The '3805' corresponds with the bill number and we can then begin defining the scraping procedure.
+
+The scraping procedure consists of three 3 steps: creating a list of unique URLs for each bill, downloading the page, and saving the HTML to the local folder Bill_115.
+
+```{r download}
+
+
+```
+
+
+To begin, first the advanced search is seleced. We will be using the most current full session, 115th Congress, from 2017-2018
+
+https://www.congress.gov/bill/115th-congress/senate-bill/3805/cosponsors
+Assemble the list
+Define Scraing Procedure
+Download Bills
+Inspect Source code
+run the code on the other bills
+Populate the dataframe
+data cleaning
+
+References
+Legislative process: https://njstatehousetours.org/tour/wp-content/uploads/2017/12/2017Insidepage_LegProcside2.pdf
